@@ -1,0 +1,10 @@
+#version 440 core
+layout(location=0) in vec3 aPos;
+//MVP矩阵
+uniform mat4 MMatrix;
+uniform mat4 VMatrix;
+uniform mat4 PMatrix;
+void main()
+{
+	gl_Position=PMatrix*VMatrix*MMatrix*vec4(aPos.x,aPos.y-0.5,aPos.z,1.0);
+}

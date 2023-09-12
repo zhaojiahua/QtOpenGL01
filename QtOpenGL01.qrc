@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/QtOpenGL01">
+        <file>assetsFromWeb/images/hua01.png</file>
+        <file>shader_sources/fShader_test.txt</file>
+        <file>shader_sources/vShader_test.txt</file>
+        <file>assetsFromWeb/textures/boom00_tex.png</file>
+        <file>assetsFromWeb/textures/char00_tex.png</file>
+        <file>shader_sources/fShader_Icosahedron.txt</file>
+        <file>shader_sources/vShader_Icosahedron.txt</file>
+    </qresource>
+</RCC>

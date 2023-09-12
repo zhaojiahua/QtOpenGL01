@@ -1,0 +1,14 @@
+#version 440 core
+out vec4 fragColor;
+in vec3 ptColor;
+in vec2 ptUV;
+uniform vec4 capColor;//全局变量 可以从CPU获取
+uniform sampler2D tempTex;
+uniform sampler2D tempTex2;
+void main()
+{
+	//fragColor=vec4(1.0,0.5,0.2,1.0);
+	//fragColor=texture(tempTex,ptUV)*vec4(capColor.xyz+ptColor,1.0);
+	//fragColor=texture(tempTex,ptUV);
+	fragColor=mix(texture(tempTex,ptUV),texture(tempTex2,ptUV),0.5);
+}

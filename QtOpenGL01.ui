@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QtOpenGL01Class</class>
+ <widget class="QMainWindow" name="QtOpenGL01Class">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1080</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string extracomment="Qt OpenGL实现">QtOpenGL</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normalon>:/QtOpenGL01/assetsFromWeb/images/hua01.png</normalon>
+   </iconset>
+  </property>
+  <property name="windowOpacity">
+   <double>0.900000000000000</double>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="ZjhOpenGLWidget" name="zjhOpenGLWidget">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>1079</width>
+      <height>699</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1080</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuwenjian">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionNewFile"/>
+    <addaction name="actionClear"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpenFile"/>
+    <addaction name="actionSave_as"/>
+   </widget>
+   <widget class="QMenu" name="menushezhi">
+    <property name="title">
+     <string>设置</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuchakan">
+    <property name="title">
+     <string>查看</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menubangzhu">
+    <property name="title">
+     <string>帮助</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>操作</string>
+    </property>
+    <addaction name="actionDrawRect"/>
+    <addaction name="actionDrawIcosahedron"/>
+    <addaction name="separator"/>
+    <addaction name="actionClearAll"/>
+   </widget>
+   <addaction name="menuwenjian"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menushezhi"/>
+   <addaction name="menuchakan"/>
+   <addaction name="menubangzhu"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+   <addaction name="actionDrawRect"/>
+   <addaction name="actionDrawIcosahedron"/>
+   <addaction name="separator"/>
+   <addaction name="actionClearAll"/>
+   <addaction name="separator"/>
+   <addaction name="actionWireFarme"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionNewFile">
+   <property name="text">
+    <string>NewFile</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="text">
+    <string>OpenFile</string>
+   </property>
+  </action>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionDrawRect">
+   <property name="text">
+    <string>DrawRect</string>
+   </property>
+  </action>
+  <action name="actionClearAll">
+   <property name="text">
+    <string>ClearAll</string>
+   </property>
+  </action>
+  <action name="actionWireFarme">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>WireFarme</string>
+   </property>
+  </action>
+  <action name="actionDrawIcosahedron">
+   <property name="text">
+    <string>DrawIcosahedron</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ZjhOpenGLWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header>ZjhOpenGLWidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="QtOpenGL01.qrc"/>
+ </resources>
+ <connections/>
+</ui>
