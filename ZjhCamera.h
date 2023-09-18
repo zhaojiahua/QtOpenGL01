@@ -26,6 +26,17 @@ private:
 	void UpdataPMatrix();//视角,宽高比,近裁剪面,远裁剪面这四个参数任一个发生改变都要更新透视矩阵
 	void UpdataVMatrix();//位置,朝向,顶向这三个参数任一个发生变化都要更新视图矩阵
 
+	//θ和φ角
+	float theat = PI;//默认θ=180
+	float phi = 0;//φ=0
+	//根据θ和φ的值计算Forward向量
+	void UpdataForward();
+	void UpdataPosition();
+
+	//摄像机弹簧臂
+	float springLength = 5;
+	QVector3D springForce;//相机臂的末端,也就是相机聚焦的地方
+
 public:
 	//获取相机当前视角宽度
 	float Fov();
@@ -62,5 +73,12 @@ public:
 	QMatrix4x4 GetViewMatrix();
 
 	void CameraMove(int inx, int iny);
+	void TrackingShot(int iny);
+
+	//Pitch Yaw Roll 旋转
+	void CameraRotate(int inx, int iny);
+
+	void CameraForceOn(int inx, int iny);
+
 };
 

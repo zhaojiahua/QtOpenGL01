@@ -85,6 +85,8 @@
   <ItemGroup>
     <ClCompile Include="ZjhCamera.cpp" />
     <ClCompile Include="ZjhIcosahedron.cpp" />
+    <ClCompile Include="ZjhLight.cpp" />
+    <ClCompile Include="ZjhMesh.cpp" />
     <ClCompile Include="ZjhOpenGLWidget.cpp" />
     <QtRcc Include="QtOpenGL01.qrc" />
     <QtUic Include="QtOpenGL01.ui" />
@@ -100,6 +102,8 @@
     <ClInclude Include="AllIncludeFiles.h" />
     <ClInclude Include="ZjhCamera.h" />
     <ClInclude Include="ZjhIcosahedron.h" />
+    <ClInclude Include="ZjhLight.h" />
+    <ClInclude Include="ZjhMesh.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

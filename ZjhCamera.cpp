@@ -1,23 +1,41 @@
 #include "ZjhCamera.h"
+#include <cmath>
 
 ZjhCamera::ZjhCamera():
-	mPosition(0,0,1),mForward(0,0,-1),mUpward(0,1,0), mFov(60), mRatio(1.7778), mNear(0.1),mFar(500)
+	mPosition(0,0,5),mForward(0,0,-1),mUpward(0,1,0), mFov(60), mRatio(1.7778), mNear(0.1),mFar(1000)
 {
 	mPMatrix.setToIdentity();
 	mVMatrix.setToIdentity();
-	UpdataPMatrix();
-	UpdataVMatrix();
+	mPMatrix.perspective(mFov, mRatio, mNear, mFar);
+	mVMatrix.lookAt(mPosition, mPosition + mForward * 100, mUpward);
 }
 
 void ZjhCamera::UpdataPMatrix()
 {
+	mPMatrix.setToIdentity();
 	mPMatrix.perspective(mFov, mRatio, mNear, mFar);
 }
 
 void ZjhCamera::UpdataVMatrix()
 {
 	mVMatrix.setToIdentity();
-	mVMatrix.lookAt(mPosition, mPosition + mForward * 10, mUpward);
+	mVMatrix.lookAt(mPosition, mPosition + mForward * 100, mUpward);
+}
+
+void ZjhCamera::UpdataForward()
+{
+	//这里确保θ取值在正负180之间
+	if (theat > PI)theat -= PI_2;
+	if (theat < -PI)theat += PI_2;
+
+	mForward.setZ(cos(phi) * cos(theat));//θ和φ都为0的时候指向z轴正方向,所以默认θ=180
+	mForward.setX(cos(phi) * sin(theat));
+	mForward.setY(sin(phi));
+}
+
+void ZjhCamera::UpdataPosition()
+{
+	mPosition = springForce - mForward * springLength;
 }
 
 float ZjhCamera::Fov()
@@ -99,7 +117,6 @@ void ZjhCamera::SetCurrentUpward(QVector3D inupward)
 
 QMatrix4x4 ZjhCamera::GetPerspectiveMatrix()
 {
-	mPMatrix.setToIdentity();
 	return mPMatrix;
 }
 
@@ -111,9 +128,39 @@ QMatrix4x4 ZjhCamera::GetViewMatrix()
 void ZjhCamera::CameraMove(int inx, int iny)
 {
 	QVector3D leftward = QVector3D::crossProduct(mUpward, mForward);
-	mSensitivity = 0.001;
+	mSensitivity = 0.002;
 	mPosition += inx * mSensitivity * leftward;
 	//qDebug() << " mPosition " << mPosition.x() << " " << mPosition.y() << " " << mPosition.z();
 	mPosition = mPosition + iny * mSensitivity * mUpward;
 	UpdataVMatrix();
+}
+
+void ZjhCamera::TrackingShot(int iny)
+{
+	mSensitivity = 0.002;
+	springLength -= mSensitivity * iny;
+	UpdataPosition();
+	UpdataVMatrix();
+}
+
+void ZjhCamera::CameraRotate(int inx, int iny)
+{
+	mSensitivity = 0.002;
+	theat -= inx * mSensitivity;
+	phi -= iny * mSensitivity;
+	//这里φ要限制在正负90度之间
+	if (phi > PI_0_5) phi = PI_0_5;
+	if (phi < -PI_0_5) phi = -PI_0_5;
+	UpdataForward();
+	UpdataPosition();
+	UpdataVMatrix();
+}
+
+void ZjhCamera::CameraForceOn(int inx, int iny)
+{
+	mSensitivity = 0.01;
+	
+	mFov += (mSensitivity * inx + mSensitivity * iny);
+
+	UpdataPMatrix();
 }

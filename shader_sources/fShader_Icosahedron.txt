@@ -1,7 +1,22 @@
 #version 440 core
+
+in vec3 ptNr;
+in vec3 ptPos;
+
 out vec4 fragColor;
+
+uniform vec3 camPos;//摄像机位置(也就是眼镜的位置)
+uniform vec3 lightDir;//灯光的方向(平行光)
 
 void main()
 {
-	fragColor=vec4(1.0,0.5,0.2,1.0);
+
+	vec3 chushejiao=normalize(camPos-ptPos);
+	vec3 rushejiao=-normalize(lightDir);
+	vec3 bancheng = normalize(chushejiao+rushejiao);
+	float intensity_fac=dot(bancheng,normalize(ptNr))*0.5+0.5;
+
+	fragColor=vec4(0.5,0.5,0.2,1.0)*intensity_fac;
+	//fragColor=vec4(ptNr,1.0);
+
 }

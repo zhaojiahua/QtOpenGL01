@@ -7,5 +7,7 @@
         <file>assetsFromWeb/textures/char00_tex.png</file>
         <file>shader_sources/fShader_Icosahedron.txt</file>
         <file>shader_sources/vShader_Icosahedron.txt</file>
+        <file>shader_sources/fShader_arrow.txt</file>
+        <file>shader_sources/vShader_arrow.txt</file>
     </qresource>
 </RCC>

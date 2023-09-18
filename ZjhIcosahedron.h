@@ -12,6 +12,8 @@ public:
 
 private:
 	float pointDatas[36]{};//将数组元素初始化成0(12个顶点)
+	float verticesDatas[360]{};//60个顶点信息和60个法线信息
+	float normalDatas[180]{};//每个面的三个顶点各有法线方向,一共60个法线
 	int indexs[60]{
 							0,1,2,	//0
 							0,2,3,	//1
@@ -34,9 +36,39 @@ private:
 							7,8,11,		//18
 							6,7,11		//19
 						};//20个面
+	float face0Datas[18]{};
+	float face1Datas[18]{};
+	float face2Datas[18]{};
+	float face3Datas[18]{};
+	float face4Datas[18]{};
+	float face5Datas[18]{};
+	float face6Datas[18]{};
+	float face7Datas[18]{};
+	float face8Datas[18]{};
+	float face9Datas[18]{};
+	float face10Datas[18]{};
+	float face11Datas[18]{};
+	float face12Datas[18]{};
+	float face13Datas[18]{};
+	float face14Datas[18]{};
+	float face15Datas[18]{};
+	float face16Datas[18]{};
+	float face17Datas[18]{};
+	float face18Datas[18]{};
+	float face19Datas[18]{};
+	std::vector<float*> faces;
+
+	float zjhTriangle[9]{ 10,10,-1, 0,1,1,  1,0,1 };
+
 public:
 	float* GetPointDatas();
+	float* GetAllVerticesDatas();
+	float* GetNormalDatas();
+	float* GetFacesDatas(int faceinidex);
+	float* GetZjhTriangle();
 	int* GetIndices();
+
+	void PrintNormal();
 
 	//输入旋转轴向和旋转角度,获得相应的旋转矩阵
 	static QMatrix4x4 GetRotateMatrix(double inradi, QVector3D indirection);

@@ -1,0 +1,11 @@
+#version 440 core
+out vec4 fragColor;
+
+in float ptInc;
+
+uniform vec3 axisCr;//传入颜色
+
+void main()
+{
+	fragColor=ptInc*vec4(axisCr,0.5);
+}

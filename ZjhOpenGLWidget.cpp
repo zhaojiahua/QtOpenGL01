@@ -6,7 +6,14 @@ ZjhOpenGLWidget::ZjhOpenGLWidget(QWidget *parent)	: QOpenGLWidget(parent)
 	tempTimer.start(20);
 	connect(&tempTimer, &QTimer::timeout, this, &ZjhOpenGLWidget::Change);
 	icosahedron =new ZjhIcosahedron();
+	defaultMesh = new ZjhMesh(FileType::Z_OBJ, "E:/AAA_Working/VisualStudio2022/QtOpenGL01/assetsFromCC/coodArrow.obj");
 	defaultCamera = new ZjhCamera();
+	light = new ZjhLight(QVector3D(-1, -1, -1), QVector3D(10, 10, 10), QColor(200, 200, 50));
+	rotmatrix_forArrow.setToIdentity();
+	rotmatrix_forArrow2.setToIdentity();
+	rotmatrix_forArrow.rotate(90, 0, 0, -1);
+	rotmatrix_forArrow2.rotate(90, 1, 0, 0);
+
 }
 
 ZjhOpenGLWidget::~ZjhOpenGLWidget()
@@ -42,6 +49,11 @@ void ZjhOpenGLWidget::initializeGL()
 	//绑定好数据缓冲区之后向GPU传送数据
 	SendGPUPointsData();
 
+	glGenVertexArrays(1, &mVAO_ARROW);
+	glGenBuffers(1, &mVBO_ARROW);
+	glGenBuffers(1, &mEBO_ARROW);
+	SendGPUMeshData(defaultMesh);
+
 	{
 	//手动创建 编译和链接shader
 	//QFile vshaderfile("./shader_sources/vShader_test.txt", this);
@@ -76,6 +88,9 @@ void ZjhOpenGLWidget::initializeGL()
 	mQShader_for_Icosahedron.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/QtOpenGL01/shader_sources/vShader_Icosahedron.txt");
 	mQShader_pro.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/QtOpenGL01/shader_sources/fShader_test.txt");
 	mQShader_for_Icosahedron.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/QtOpenGL01/shader_sources/fShader_Icosahedron.txt");
+	//初始化一个shader用来渲染坐标箭头
+	mShader_arrow.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/QtOpenGL01/shader_sources/vShader_arrow.txt");
+	mShader_arrow.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/QtOpenGL01/shader_sources/fShader_arrow.txt");
 	success=mQShader_pro.link();
 	//捕捉链接错误信息并报告
 	if (!success) {
@@ -89,12 +104,21 @@ void ZjhOpenGLWidget::initializeGL()
 		glGetProgramInfoLog(mShader_pro, 512, NULL, &infoLog);
 		qDebug() << "Shader Program Link Erro : " << infoLog;
 	}
+	success = mShader_arrow.link();
+	if (!success) {
+		GLchar infoLog;
+		glGetProgramInfoLog(mShader_pro, 512, NULL, &infoLog);
+		qDebug() << "Shader Program Link Erro : " << infoLog;
+	}
+
 	//设置绘制模式
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);//填充模式绘制
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式绘制
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);//点模式绘制
 	//调用GPU指令设置OpenGL状态值
 	glClearColor(0.25f, 0.2f, 0.4f, 1.0f);
+
+	glEnable(GL_DEPTH_TEST);
 
 	previewTime = QDateTime::currentDateTime().toMSecsSinceEpoch();//GL初始化结束后开始计时
 }
@@ -119,7 +143,6 @@ void ZjhOpenGLWidget::paintGL()
 	case ZjhOpenGLWidget::none:
 		break;
 	case ZjhOpenGLWidget::rectangle:
-
 		scaleMatrix.setToIdentity();//把矩阵归一化(清零所有变换)
 		scaleMatrix.translate(-0.5, 0.5, 0);//矩阵运算的顺序是反的,先缩放后位移
 		scaleMatrix.scale(fabs(sin(QTime::currentTime().msec())));
@@ -127,23 +150,51 @@ void ZjhOpenGLWidget::paintGL()
 		rotMatrix.setToIdentity();
 		rotMatrix.translate(0.5, -0.5, 0);
 		rotMatrix.rotate(QTime::currentTime().msec(), 0, 0, 1);//绕Z轴不断旋转(在原值的基础上继续增加旋转量)
+
+		mQShader_pro.bind();
 		mQShader_pro.setUniformValue("zjhMatrix", rotMatrix);
+
+		glBindVertexArray(mVAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		mQShader_pro.setUniformValue("zjhMatrix", scaleMatrix);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 		break;
 	case ZjhOpenGLWidget::circle:
 		break;
 	case ZjhOpenGLWidget::triangle:
 		break;
 	case ZjhOpenGLWidget::Icosahedron:
+		mQShader_for_Icosahedron.bind();
 		mQShader_for_Icosahedron.setUniformValue("VMatrix", defaultCamera->GetViewMatrix());
 		mQShader_for_Icosahedron.setUniformValue("PMatrix", defaultCamera->GetPerspectiveMatrix());
-		glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);
+		mQShader_for_Icosahedron.setUniformValue("camPos", defaultCamera->GetCurrentPosition());
+		mQShader_for_Icosahedron.setUniformValue("lightDir", light->mDirection);
+		glBindVertexArray(mVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 60);
+		//glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 		break;
 	default:
 		break;
 	}
+
+	//绘制箭头坐标
+	glBindVertexArray(mVAO_ARROW);
+	mShader_arrow.bind();
+	mShader_arrow.setUniformValue("MMatrix", defaultMesh->modleMatrix);
+	mShader_arrow.setUniformValue("VMatrix", defaultCamera->GetViewMatrix());
+	mShader_arrow.setUniformValue("PMatrix", defaultCamera->GetPerspectiveMatrix());
+	mShader_arrow.setUniformValue("camPos", defaultCamera->GetCurrentPosition());
+	mShader_arrow.setUniformValue("axisCr", QVector3D(0.1, 0.5, 0.1));
+	glDrawArrays(GL_TRIANGLES, 0, defaultMesh->TriangleFaceNum() * 3);
+	mShader_arrow.setUniformValue("MMatrix", rotmatrix_forArrow);
+	mShader_arrow.setUniformValue("axisCr", QVector3D(0.5, 0.1, 0.1));
+	glDrawArrays(GL_TRIANGLES, 0, defaultMesh->TriangleFaceNum() * 3);
+	mShader_arrow.setUniformValue("MMatrix", rotmatrix_forArrow2);
+	mShader_arrow.setUniformValue("axisCr", QVector3D(0.1, 0.1, 0.5));
+	glDrawArrays(GL_TRIANGLES, 0, defaultMesh->TriangleFaceNum() * 3);
+	glBindVertexArray(0);
 
 	//****计算每帧之间的时间间隔deltaTime****//
 	currentTime = QDateTime::currentDateTime().toMSecsSinceEpoch();//获取绝对时间戳
@@ -154,6 +205,7 @@ void ZjhOpenGLWidget::paintGL()
 
 void ZjhOpenGLWidget::SendGPUPointsData()
 {
+	QFile t_file;
 	QMatrix4x4  mMatrix;
 	mMatrix.setToIdentity();
 	switch (mShape)
@@ -190,7 +242,7 @@ void ZjhOpenGLWidget::SendGPUPointsData()
 
 		//填充完数据解绑
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		//glBindVertexArray(0);
+		glBindVertexArray(0);
 
 		//绑定VAO和shader并向GPU发送绘制指令
 		//glBindVertexArray(mVAO);
@@ -206,14 +258,51 @@ void ZjhOpenGLWidget::SendGPUPointsData()
 		makeCurrent();
 		//绑定VAO和VBO EBO
 		glBindVertexArray(mVAO);//一定要最先绑定VAO再向VBO和EBO里面传送数据,这样VAO才能记录VBO和EBO
+		
+		//绑定顶点空间位置数据
 		glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEBO);
 		//向GPU发送数据
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 36, icosahedron->GetPointDatas(), GL_STATIC_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 60, icosahedron->GetIndices(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		//开启VAO的属性
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18, icosahedron->GetFacesDatas(15), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 360, icosahedron->GetAllVerticesDatas(), GL_STATIC_DRAW);
+		
+		/*
+				t_file.setFileName(QString("./out/teshobjs/obj_all.obj"));
+		t_file.open(QIODevice::WriteOnly);
+		for (int i = 0; i < 12; i++) {
+			float* tempdatas = icosahedron->GetPointDatas();
+			QString tempStr = QString("v %1 %2 %3\n").arg(tempdatas[3 * i]).arg(tempdatas[3 * i + 1]).arg(tempdatas[3 * i + 2]);
+			t_file.write(tempStr.toStdString().c_str());
+		}
+		t_file.write("\n");
+		for (int i = 0; i < 20; i++) {
+			int* tempdatas = icosahedron->GetIndices();
+			QString tempStr = QString("f %1 %2 %3\n").arg(tempdatas[3 * i] + 1).arg(tempdatas[3 * i + 1] + 1).arg(tempdatas[3 * i + 2] + 1);
+			t_file.write(tempStr.toStdString().c_str());
+		}
+		t_file.close();
+		*/
+
+		//debug	输出所有片元
+		/*for (int i = 0; i < 20; i++) {
+			t_file.setFileName(QString("./out/teshobjs/obj_%1.obj").arg(i));
+			t_file.open(QIODevice::WriteOnly);
+			float* tempdatas = icosahedron->GetFacesDatas(i);
+			for (int j = 0; j < 3; j++) {
+				QString t_writeContent = QString("v %1 %2 %3\n").arg(tempdatas[6 * j]).arg(tempdatas[6 * j + 1]).arg(tempdatas[6 * j + 2]);
+				QString t_writeContent_n = QString("vn %1 %2 %3\n").arg(tempdatas[6 * j+3]).arg(tempdatas[6 * j + 4]).arg(tempdatas[6 * j + 5]);
+				t_file.write(t_writeContent.toStdString().c_str());
+				t_file.write(t_writeContent_n.toStdString().c_str());
+			}
+			t_file.write("\nf 1 2 3");
+			t_file.close();
+		}*/
+		
+		//VAO记录一下
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+
 		//填充完数据解绑
 		//glBindBuffer(GL_ARRAY_BUFFER, 0);
 		//绑定VAO和shader并向GPU发送绘制指令
@@ -222,11 +311,36 @@ void ZjhOpenGLWidget::SendGPUPointsData()
 		mQShader_for_Icosahedron.setUniformValue("MMatrix", mMatrix);
 		mQShader_for_Icosahedron.setUniformValue("VMatrix", defaultCamera->GetViewMatrix());
 		mQShader_for_Icosahedron.setUniformValue("PMatrix", defaultCamera->GetPerspectiveMatrix());
+		mQShader_for_Icosahedron.setUniformValue("camPos", defaultCamera->GetCurrentPosition());
+		mQShader_for_Icosahedron.setUniformValue("lightDir", light->mDirection);
+
 		doneCurrent();
 		break;
 	default:
 		break;
 	}
+}
+
+void ZjhOpenGLWidget::SendGPUMeshData(ZjhMesh* inmesh)
+{
+	glBindVertexArray(mVAO_ARROW);
+	glBindBuffer(GL_ARRAY_BUFFER, mVBO_ARROW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEBO_ARROW);
+	//向GPU发送数据
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18 * inmesh->TriangleFaceNum(), inmesh->VerticesDatas(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(sizeof(float) * 3));
+	//开启VAO的属性
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	//glEnableVertexAttribArray(2);
+	glBindVertexArray(0);
+
+}
+
+void ZjhOpenGLWidget::DrawMesh(ZjhMesh* inmesh)
+{
+
 }
 
 void ZjhOpenGLWidget::mousePressEvent(QMouseEvent* e)
@@ -244,13 +358,26 @@ void ZjhOpenGLWidget::mouseMoveEvent(QMouseEvent* e)
 		mousePrevX = e->x();
 		mousePrevY = e->y();
 	}
-	//update();
+	else if (e->buttons() & Qt::LeftButton) {
+		int dx = e->x() - mousePrevX;
+		int dy = e->y() - mousePrevY;
+		defaultCamera->CameraRotate(dx, dy);
+		mousePrevX = e->x();
+		mousePrevY = e->y();
+	}
+	else if (e->buttons() & Qt::RightButton) {
+		int dx = e->x() - mousePrevX;
+		int dy = e->y() - mousePrevY;
+		defaultCamera->CameraForceOn(dx, dy);
+		mousePrevX = e->x();
+		mousePrevY = e->y();
+	}
 
 }
 
 void ZjhOpenGLWidget::wheelEvent(QWheelEvent* e)
 {
-
+	defaultCamera->TrackingShot(e->delta() / 10);
 }
 
 void ZjhOpenGLWidget::Change()

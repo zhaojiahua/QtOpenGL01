@@ -2,8 +2,10 @@
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNr;
 
-out vec3 ptPos;
-out vec3 ptNr;
+out float ptInc;
+
+uniform vec3 camPos;//摄像机位置(也就是眼镜的位置)
+
 //MVP矩阵
 uniform mat4 MMatrix;
 uniform mat4 VMatrix;
@@ -11,6 +13,6 @@ uniform mat4 PMatrix;
 void main()
 {
 	gl_Position=PMatrix*VMatrix*MMatrix*vec4(aPos.x,aPos.y,aPos.z,1.0);
-	ptPos=vec3(MMatrix*vec4(aPos,1.0));//在世界空间坐标系下计算光照
-	ptNr=mat3(transpose(inverse(MMatrix)))*aNr;//法线要重新计算(模型变换矩阵会影响法线的方向)
+	vec3 nNr=mat3(transpose(inverse(MMatrix)))*aNr;
+	ptInc=dot(nNr,camPos)*0.1+0.5;
 }
